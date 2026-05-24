@@ -3,13 +3,14 @@ import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import { headers } from "next/headers";
 import Link from "next/link";
-import { ArrowLeft, Copy, ExternalLink, CheckCircle, Clock, XCircle, MessageSquare, FileText, Plus } from "lucide-react";
+import { ArrowLeft, Copy, ExternalLink, CheckCircle, Clock, XCircle, MessageSquare, FileText, StickyNote } from "lucide-react";
 import CopyButton from "@/components/CopyButton";
 import SendLinkButton from "@/components/SendLinkButton";
 import AddInvoiceForm from "@/components/AddInvoiceForm";
 import AddDeliverableForm from "@/components/AddDeliverableForm";
 import ChatBox from "@/components/ChatBox";
 import AutoRefreshOnFocus from "@/components/AutoRefreshOnFocus";
+import { ProjectStatusSelect, ProjectNotes } from "@/components/ProjectActions";
 
 export default async function ProjectDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -36,12 +37,16 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
 
   const invoiceStatusConfig: Record<string, { label: string; color: string; bg: string }> = {
     pending: { label: "En attente", color: "#f59e0b", bg: "rgba(245,158,11,0.15)" },
-    paid: { label: "Payé", color: "#10b981", bg: "rgba(16,185,129,0.15)" },
+    paid: { label: "Payé ✓", color: "#10b981", bg: "rgba(16,185,129,0.15)" },
   };
+
+  const totalPaid = project.invoices.filter(i => i.status === "paid").reduce((s, i) => s + i.amount, 0);
+  const totalPending = project.invoices.filter(i => i.status === "pending").reduce((s, i) => s + i.amount, 0);
 
   return (
     <div className="text-white max-w-5xl">
       <AutoRefreshOnFocus interval={8000} />
+
       <Link href="/dashboard/projects"
         className="inline-flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors mb-6">
         <ArrowLeft className="w-4 h-4" />
@@ -49,37 +54,53 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
       </Link>
 
       {/* Header */}
-      <div className="flex items-start justify-between mb-8">
+      <div className="flex items-start justify-between mb-6">
         <div>
           <h1 className="text-3xl font-black">{project.name}</h1>
           <p className="text-gray-400 mt-1">{project.clientName} · {project.clientEmail}</p>
           {project.description && <p className="text-gray-500 text-sm mt-2">{project.description}</p>}
         </div>
+        <ProjectStatusSelect projectId={project.id} currentStatus={project.status} />
       </div>
+
+      {/* Résumé financier */}
+      {project.invoices.length > 0 && (
+        <div className="grid grid-cols-2 gap-4 mb-6">
+          <div className="p-4 rounded-2xl"
+            style={{ background: "rgba(16,185,129,0.08)", border: "1px solid rgba(16,185,129,0.2)" }}>
+            <p className="text-xs text-emerald-400 font-bold uppercase tracking-wide mb-1">Encaissé</p>
+            <p className="text-2xl font-black text-emerald-400">{totalPaid}€</p>
+          </div>
+          <div className="p-4 rounded-2xl"
+            style={{ background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.2)" }}>
+            <p className="text-xs text-yellow-400 font-bold uppercase tracking-wide mb-1">En attente</p>
+            <p className="text-2xl font-black text-yellow-400">{totalPending}€</p>
+          </div>
+        </div>
+      )}
 
       {/* Magic Link */}
       <div className="p-5 rounded-2xl mb-6"
         style={{ background: "rgba(99,102,241,0.1)", border: "1px solid rgba(99,102,241,0.3)" }}>
-        <div className="flex items-center justify-between">
-          <div>
+        <div className="flex items-center justify-between gap-4">
+          <div className="min-w-0">
             <div className="text-sm font-bold text-indigo-300 mb-1">🔗 Lien magique client</div>
-            <div className="text-gray-400 text-sm font-mono truncate max-w-md">{portalUrl}</div>
+            <div className="text-gray-400 text-xs font-mono truncate">{portalUrl}</div>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-shrink-0">
             <SendLinkButton projectId={project.id} clientEmail={project.clientEmail} />
             <CopyButton text={portalUrl} />
             <a href={portalUrl} target="_blank" rel="noopener noreferrer"
-              className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium text-indigo-300 hover:text-white transition-colors"
+              className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium text-indigo-300 hover:text-white transition-colors"
               style={{ background: "rgba(99,102,241,0.2)" }}>
               <ExternalLink className="w-4 h-4" />
-              Ouvrir
             </a>
           </div>
         </div>
       </div>
 
       <div className="grid md:grid-cols-2 gap-6">
-        {/* Deliverables */}
+        {/* Livrables */}
         <div className="rounded-2xl overflow-hidden"
           style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)" }}>
           <div className="flex items-center justify-between px-5 py-4"
@@ -112,7 +133,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
           </div>
         </div>
 
-        {/* Invoices */}
+        {/* Factures */}
         <div className="rounded-2xl overflow-hidden"
           style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)" }}>
           <div className="flex items-center justify-between px-5 py-4"
@@ -128,17 +149,25 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
             ) : (
               project.invoices.map((inv) => {
                 const s = invoiceStatusConfig[inv.status] || invoiceStatusConfig.pending;
+                const isOverdue = inv.status === "pending" && inv.dueDate && new Date(inv.dueDate) < new Date();
                 return (
                   <div key={inv.id} className="flex items-center justify-between p-3 rounded-xl"
-                    style={{ background: "rgba(255,255,255,0.03)" }}>
+                    style={{ background: "rgba(255,255,255,0.03)", border: isOverdue ? "1px solid rgba(239,68,68,0.3)" : "none" }}>
                     <div>
                       <div className="text-sm font-medium">{inv.description || "Facture"}</div>
-                      <div className="text-xs text-gray-500">{new Date(inv.createdAt).toLocaleDateString("fr-FR")}</div>
+                      <div className="text-xs text-gray-500">
+                        {new Date(inv.createdAt).toLocaleDateString("fr-FR")}
+                        {inv.dueDate && (
+                          <span className={isOverdue ? " text-red-400 font-medium" : " text-gray-600"}>
+                            {" "}· échéance {new Date(inv.dueDate).toLocaleDateString("fr-FR")}
+                          </span>
+                        )}
+                      </div>
                     </div>
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2">
                       <span className="font-bold text-white">{inv.amount}€</span>
                       <span className="text-xs px-2 py-0.5 rounded-full" style={{ color: s.color, background: s.bg }}>
-                        {s.label}
+                        {isOverdue ? "⚠️ En retard" : s.label}
                       </span>
                     </div>
                   </div>
@@ -146,6 +175,21 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
               })
             )}
             <AddInvoiceForm projectId={project.id} />
+          </div>
+        </div>
+
+        {/* Notes internes */}
+        <div className="md:col-span-2 rounded-2xl overflow-hidden"
+          style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)" }}>
+          <div className="px-5 py-4" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+            <h2 className="font-bold flex items-center gap-2">
+              <StickyNote className="w-4 h-4 text-yellow-400" />
+              Notes internes
+              <span className="text-xs text-gray-600 font-normal ml-1">— invisibles pour le client</span>
+            </h2>
+          </div>
+          <div className="p-4">
+            <ProjectNotes projectId={project.id} initialNotes={project.notes ?? ""} />
           </div>
         </div>
 

@@ -31,6 +31,7 @@ model Project {
   clientName  String
   clientEmail String
   magicToken  String   @unique @default(cuid())
+  notes       String   @default("")
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   userId      String

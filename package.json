@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "prisma generate && (prisma db execute --file prisma/add_reactions.sql || true) && next build",
+    "build": "prisma generate && (prisma db execute --file prisma/add_reactions.sql || true) && (prisma db execute --file prisma/add_notes.sql || true) && next build",
     "start": "next start",
     "lint": "eslint"
   },
