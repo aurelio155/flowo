@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { Zap, CheckCircle, Clock, XCircle, MessageSquare, FileText } from "lucide-react";
 import ClientPortalActions from "@/components/ClientPortalActions";
 import ChatBox from "@/components/ChatBox";
+import PayInvoiceButton from "@/components/PayInvoiceButton";
 
 export default async function PortalPage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
@@ -145,11 +146,13 @@ export default async function PortalPage({ params }: { params: Promise<{ token: 
                     </div>
                     <div className="flex items-center gap-3">
                       <span className="font-bold">{inv.amount}€</span>
-                      <span className={`text-xs px-3 py-1 rounded-full ${
-                        inv.status === "paid" ? "text-green-400 bg-green-400/10" : "text-yellow-400 bg-yellow-400/10"
-                      }`}>
-                        {inv.status === "paid" ? "Payé" : "En attente"}
-                      </span>
+                      {inv.status === "paid" ? (
+                        <span className="text-xs px-3 py-1 rounded-full text-green-400 bg-green-400/10">
+                          Payé ✓
+                        </span>
+                      ) : (
+                        <PayInvoiceButton token={token} invoiceId={inv.id} amount={inv.amount} />
+                      )}
                     </div>
                   </div>
                 ))}
