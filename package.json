@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "prisma generate && (prisma migrate resolve --rolled-back 20260523211138_init || true) && prisma migrate deploy && next build",
+    "build": "prisma generate && (prisma db execute --file prisma/fix.sql || true) && prisma migrate deploy && next build",
     "start": "next start",
     "lint": "eslint"
   },
