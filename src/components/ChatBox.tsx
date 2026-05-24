@@ -80,7 +80,6 @@ export default function ChatBox({ initialMessages, currentSender, projectId, por
     }
   }, [lastOtherMsgTime]);
 
-
   async function handleSend(e: React.FormEvent) {
     e.preventDefault();
     if (!content.trim() || sending) return;
@@ -135,11 +134,7 @@ export default function ChatBox({ initialMessages, currentSender, projectId, por
 
   return (
     <div className="flex flex-col">
-      {/* Backdrop pour fermer le picker en cliquant ailleurs */}
-      {pickerOpen && (
-        <div className="fixed inset-0 z-10" onClick={() => setPickerOpen(null)} />
-      )}
-      <div ref={scrollContainerRef} className="p-4 space-y-2 max-h-72 overflow-y-auto">
+      <div ref={scrollContainerRef} className="p-4 space-y-3 max-h-72 overflow-y-auto">
         {messages.length === 0 && (
           <p className="text-gray-500 text-sm text-center py-4">Aucun message pour l&apos;instant</p>
         )}
@@ -149,56 +144,64 @@ export default function ChatBox({ initialMessages, currentSender, projectId, por
           const reactions: Record<string, string[]> = JSON.parse(msg.reactions || "{}");
           const hasReactions = Object.keys(reactions).length > 0;
           const isOptimistic = msg.id.startsWith("opt-");
+          const isPickerOpen = pickerOpen === msg.id;
 
           return (
             <div key={msg.id} className={`flex flex-col ${isMine ? "items-end" : "items-start"}`}>
+
+              {/* Emoji picker — inline, jamais clippé */}
+              {isPickerOpen && (
+                <div
+                  className={`flex gap-2 px-3 py-2 mb-1 rounded-2xl ${isMine ? "self-end" : "self-start"}`}
+                  style={{ background: "rgba(20,20,35,0.95)", border: "1px solid rgba(255,255,255,0.12)" }}
+                >
+                  {EMOJIS.map(e => (
+                    <button
+                      key={e}
+                      onPointerDown={ev => { ev.preventDefault(); handleReact(msg.id, e); }}
+                      className="text-xl active:scale-125 transition-transform"
+                    >{e}</button>
+                  ))}
+                </div>
+              )}
+
               <div className={`flex items-end gap-1.5 ${isMine ? "flex-row-reverse" : "flex-row"}`}>
-                {/* Emoji trigger button */}
+                {/* Bouton émoji */}
                 {!isOptimistic && (
                   <button
-                    onClick={() => setPickerOpen(pickerOpen === msg.id ? null : msg.id)}
-                    className="mb-1 w-7 h-7 flex items-center justify-center rounded-full opacity-40 hover:opacity-80 active:opacity-100 transition-opacity flex-shrink-0 z-20"
-                    style={{ background: "rgba(255,255,255,0.06)" }}
-                    title="Réagir"
+                    onPointerDown={ev => {
+                      ev.preventDefault();
+                      setPickerOpen(isPickerOpen ? null : msg.id);
+                    }}
+                    className="mb-1 w-8 h-8 flex items-center justify-center rounded-full flex-shrink-0 transition-all"
+                    style={{
+                      background: isPickerOpen ? "rgba(99,102,241,0.3)" : "rgba(255,255,255,0.06)",
+                      border: isPickerOpen ? "1px solid rgba(99,102,241,0.5)" : "1px solid rgba(255,255,255,0.08)",
+                    }}
                   >
                     <Smile className="w-4 h-4 text-gray-300" />
                   </button>
                 )}
 
-                <div className="relative">
-                  {/* Emoji picker popup */}
-                  {pickerOpen === msg.id && (
-                    <div
-                      className={`absolute z-30 flex gap-1 p-1.5 rounded-2xl shadow-xl bottom-full mb-2 ${isMine ? "right-0" : "left-0"}`}
-                      style={{ background: "rgba(20,20,30,0.98)", border: "1px solid rgba(255,255,255,0.15)" }}
-                    >
-                      {EMOJIS.map(e => (
-                        <button
-                          key={e}
-                          onClick={() => handleReact(msg.id, e)}
-                          className="text-lg hover:scale-125 active:scale-110 transition-transform px-0.5"
-                        >{e}</button>
-                      ))}
-                    </div>
-                  )}
-
-                  <div className="max-w-xs px-4 py-2 rounded-2xl text-sm" style={{
+                <div
+                  className="max-w-xs px-4 py-2 rounded-2xl text-sm"
+                  style={{
                     background: isMine ? "rgba(99,102,241,0.6)" : "rgba(255,255,255,0.09)",
                     borderRadius: isMine ? "18px 4px 18px 18px" : "4px 18px 18px 18px",
                     opacity: isOptimistic ? 0.7 : 1,
-                  }}>
-                    {msg.content}
-                  </div>
+                  }}
+                >
+                  {msg.content}
                 </div>
               </div>
 
               {/* Reactions */}
               {hasReactions && (
-                <div className={`flex gap-1 mt-1 px-1 ${isMine ? "flex-row-reverse" : "flex-row"}`}>
+                <div className={`flex flex-wrap gap-1 mt-1 px-1 ${isMine ? "justify-end" : "justify-start"}`}>
                   {Object.entries(reactions).map(([emoji, users]) => (
                     <button
                       key={emoji}
-                      onClick={() => handleReact(msg.id, emoji)}
+                      onPointerDown={ev => { ev.preventDefault(); handleReact(msg.id, emoji); }}
                       className="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs"
                       style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)" }}
                     >
