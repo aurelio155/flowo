@@ -80,11 +80,6 @@ export default function ChatBox({ initialMessages, currentSender, projectId, por
     }
   }, [lastOtherMsgTime]);
 
-  useEffect(() => {
-    function close() { setPickerOpen(null); }
-    document.addEventListener("click", close);
-    return () => document.removeEventListener("click", close);
-  }, []);
 
   async function handleSend(e: React.FormEvent) {
     e.preventDefault();
@@ -140,6 +135,10 @@ export default function ChatBox({ initialMessages, currentSender, projectId, por
 
   return (
     <div className="flex flex-col">
+      {/* Backdrop pour fermer le picker en cliquant ailleurs */}
+      {pickerOpen && (
+        <div className="fixed inset-0 z-10" onClick={() => setPickerOpen(null)} />
+      )}
       <div ref={scrollContainerRef} className="p-4 space-y-2 max-h-72 overflow-y-auto">
         {messages.length === 0 && (
           <p className="text-gray-500 text-sm text-center py-4">Aucun message pour l&apos;instant</p>
@@ -157,14 +156,12 @@ export default function ChatBox({ initialMessages, currentSender, projectId, por
                 {/* Emoji trigger button */}
                 {!isOptimistic && (
                   <button
-                    onClick={e => {
-                      e.stopPropagation();
-                      setPickerOpen(pickerOpen === msg.id ? null : msg.id);
-                    }}
-                    className="mb-1 opacity-30 hover:opacity-70 active:opacity-100 transition-opacity flex-shrink-0"
+                    onClick={() => setPickerOpen(pickerOpen === msg.id ? null : msg.id)}
+                    className="mb-1 w-7 h-7 flex items-center justify-center rounded-full opacity-40 hover:opacity-80 active:opacity-100 transition-opacity flex-shrink-0 z-20"
+                    style={{ background: "rgba(255,255,255,0.06)" }}
                     title="Réagir"
                   >
-                    <Smile className="w-4 h-4 text-gray-400" />
+                    <Smile className="w-4 h-4 text-gray-300" />
                   </button>
                 )}
 
@@ -172,9 +169,8 @@ export default function ChatBox({ initialMessages, currentSender, projectId, por
                   {/* Emoji picker popup */}
                   {pickerOpen === msg.id && (
                     <div
-                      className={`absolute z-20 flex gap-1 p-1.5 rounded-2xl shadow-xl bottom-full mb-2 ${isMine ? "right-0" : "left-0"}`}
+                      className={`absolute z-30 flex gap-1 p-1.5 rounded-2xl shadow-xl bottom-full mb-2 ${isMine ? "right-0" : "left-0"}`}
                       style={{ background: "rgba(20,20,30,0.98)", border: "1px solid rgba(255,255,255,0.15)" }}
-                      onClick={e => e.stopPropagation()}
                     >
                       {EMOJIS.map(e => (
                         <button
