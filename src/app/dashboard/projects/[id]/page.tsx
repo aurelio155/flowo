@@ -8,8 +8,7 @@ import CopyButton from "@/components/CopyButton";
 import SendLinkButton from "@/components/SendLinkButton";
 import AddInvoiceForm from "@/components/AddInvoiceForm";
 import AddDeliverableForm from "@/components/AddDeliverableForm";
-import ReplyMessageForm from "@/components/ReplyMessageForm";
-import AutoRefresh from "@/components/AutoRefresh";
+import ChatBox from "@/components/ChatBox";
 
 export default async function ProjectDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -41,7 +40,6 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
 
   return (
     <div className="text-white max-w-5xl">
-      <AutoRefresh interval={4000} />
       <Link href="/dashboard/projects"
         className="inline-flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors mb-6">
         <ArrowLeft className="w-4 h-4" />
@@ -158,28 +156,11 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
               Messages ({project.messages.length})
             </h2>
           </div>
-          <div className="p-4 space-y-3 max-h-64 overflow-y-auto">
-            {project.messages.length === 0 ? (
-              <p className="text-gray-500 text-sm text-center py-4">Aucun message pour l&apos;instant</p>
-            ) : (
-              project.messages.map((msg) => (
-                <div key={msg.id}
-                  className={`flex ${msg.sender === "client" ? "justify-start" : "justify-end"}`}>
-                  <div className="max-w-md px-4 py-2 rounded-2xl text-sm"
-                    style={{
-                      background: msg.sender === "client" ? "rgba(255,255,255,0.08)" : "rgba(99,102,241,0.3)",
-                      borderRadius: msg.sender === "client" ? "4px 18px 18px 18px" : "18px 4px 18px 18px",
-                    }}>
-                    <div className="text-xs text-gray-500 mb-1">{msg.sender === "client" ? "Client" : "Vous"}</div>
-                    {msg.content}
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-          <div className="px-4 pb-4">
-            <ReplyMessageForm projectId={project.id} />
-          </div>
+          <ChatBox
+            initialMessages={project.messages.map(m => ({ ...m, createdAt: m.createdAt.toISOString() }))}
+            currentSender="freelance"
+            projectId={project.id}
+          />
         </div>
       </div>
     </div>

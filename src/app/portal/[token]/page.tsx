@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import { Zap, CheckCircle, Clock, XCircle, MessageSquare, FileText } from "lucide-react";
 import ClientPortalActions from "@/components/ClientPortalActions";
-import AutoRefresh from "@/components/AutoRefresh";
+import ChatBox from "@/components/ChatBox";
 
 export default async function PortalPage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
@@ -168,29 +168,12 @@ export default async function PortalPage({ params }: { params: Promise<{ token: 
               Messagerie
             </h2>
           </div>
-          <div className="p-4">
-            <div className="space-y-3 max-h-64 overflow-y-auto mb-4">
-              {project.messages.length === 0 ? (
-                <p className="text-gray-500 text-sm text-center py-4">
-                  Posez vos questions directement ici 👇
-                </p>
-              ) : (
-                project.messages.map((msg) => (
-                  <div key={msg.id} className={`flex ${msg.sender === "client" ? "justify-end" : "justify-start"}`}>
-                    <div className="max-w-sm px-4 py-2 rounded-2xl text-sm"
-                      style={{
-                        background: msg.sender === "client" ? "rgba(99,102,241,0.3)" : "rgba(255,255,255,0.08)",
-                        borderRadius: msg.sender === "client" ? "18px 4px 18px 18px" : "4px 18px 18px 18px",
-                      }}>
-                      <div className="text-xs text-gray-500 mb-1">{msg.sender === "client" ? "Vous" : project.user.name || "Freelance"}</div>
-                      {msg.content}
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-            <ClientPortalActions token={token} action="message" />
-          </div>
+          <ChatBox
+            initialMessages={project.messages.map(m => ({ ...m, createdAt: m.createdAt.toISOString() }))}
+            currentSender="client"
+            projectId={project.id}
+            portalToken={token}
+          />
         </div>
       </div>
 
