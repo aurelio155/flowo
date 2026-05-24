@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
-import { Send } from "lucide-react";
+import { Send, Smile } from "lucide-react";
 
 interface Message {
   id: string;
@@ -29,7 +29,7 @@ export default function ChatBox({ initialMessages, currentSender, projectId, por
   const [sending, setSending] = useState(false);
   const [otherTyping, setOtherTyping] = useState(false);
   const [lastOtherMsgTime, setLastOtherMsgTime] = useState(0);
-  const [hoveredMsg, setHoveredMsg] = useState<string | null>(null);
+  const [pickerOpen, setPickerOpen] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const otherSender = currentSender === "client" ? "freelance" : "client";
 
@@ -70,6 +70,12 @@ export default function ChatBox({ initialMessages, currentSender, projectId, por
       return () => clearTimeout(t);
     }
   }, [lastOtherMsgTime]);
+
+  useEffect(() => {
+    function close() { setPickerOpen(null); }
+    document.addEventListener("click", close);
+    return () => document.removeEventListener("click", close);
+  }, []);
 
   async function handleSend(e: React.FormEvent) {
     e.preventDefault();
@@ -115,7 +121,7 @@ export default function ChatBox({ initialMessages, currentSender, projectId, por
       const updated: Message = await res.json();
       setMessages(prev => prev.map(m => m.id === msgId ? { ...m, reactions: updated.reactions } : m));
     }
-    setHoveredMsg(null);
+    setPickerOpen(null);
   }
 
   const lastMyMsg = [...messages].reverse().find(m => m.sender === currentSender);
@@ -134,41 +140,56 @@ export default function ChatBox({ initialMessages, currentSender, projectId, por
           const isLast = i === messages.length - 1 && isMine;
           const reactions: Record<string, string[]> = JSON.parse(msg.reactions || "{}");
           const hasReactions = Object.keys(reactions).length > 0;
+          const isOptimistic = msg.id.startsWith("opt-");
 
           return (
             <div key={msg.id} className={`flex flex-col ${isMine ? "items-end" : "items-start"}`}>
-              <div
-                className="relative"
-                onMouseEnter={() => setHoveredMsg(msg.id)}
-                onMouseLeave={() => setHoveredMsg(null)}
-              >
-                {/* Emoji picker on hover */}
-                {hoveredMsg === msg.id && (
-                  <div
-                    className={`absolute z-10 flex gap-1 p-1.5 rounded-2xl shadow-lg ${isMine ? "right-full mr-2" : "left-full ml-2"} top-0`}
-                    style={{ background: "rgba(30,30,40,0.95)", border: "1px solid rgba(255,255,255,0.1)" }}
+              <div className={`flex items-end gap-1.5 ${isMine ? "flex-row-reverse" : "flex-row"}`}>
+                {/* Emoji trigger button */}
+                {!isOptimistic && (
+                  <button
+                    onClick={e => {
+                      e.stopPropagation();
+                      setPickerOpen(pickerOpen === msg.id ? null : msg.id);
+                    }}
+                    className="mb-1 opacity-30 hover:opacity-70 active:opacity-100 transition-opacity flex-shrink-0"
+                    title="Réagir"
                   >
-                    {EMOJIS.map(e => (
-                      <button
-                        key={e}
-                        onClick={() => handleReact(msg.id, e)}
-                        className="text-base hover:scale-125 transition-transform"
-                      >{e}</button>
-                    ))}
-                  </div>
+                    <Smile className="w-4 h-4 text-gray-400" />
+                  </button>
                 )}
 
-                <div className="max-w-xs px-4 py-2 rounded-2xl text-sm" style={{
-                  background: isMine ? "rgba(99,102,241,0.6)" : "rgba(255,255,255,0.09)",
-                  borderRadius: isMine ? "18px 4px 18px 18px" : "4px 18px 18px 18px",
-                }}>
-                  {msg.content}
+                <div className="relative">
+                  {/* Emoji picker popup */}
+                  {pickerOpen === msg.id && (
+                    <div
+                      className={`absolute z-20 flex gap-1 p-1.5 rounded-2xl shadow-xl bottom-full mb-2 ${isMine ? "right-0" : "left-0"}`}
+                      style={{ background: "rgba(20,20,30,0.98)", border: "1px solid rgba(255,255,255,0.15)" }}
+                      onClick={e => e.stopPropagation()}
+                    >
+                      {EMOJIS.map(e => (
+                        <button
+                          key={e}
+                          onClick={() => handleReact(msg.id, e)}
+                          className="text-lg hover:scale-125 active:scale-110 transition-transform px-0.5"
+                        >{e}</button>
+                      ))}
+                    </div>
+                  )}
+
+                  <div className="max-w-xs px-4 py-2 rounded-2xl text-sm" style={{
+                    background: isMine ? "rgba(99,102,241,0.6)" : "rgba(255,255,255,0.09)",
+                    borderRadius: isMine ? "18px 4px 18px 18px" : "4px 18px 18px 18px",
+                    opacity: isOptimistic ? 0.7 : 1,
+                  }}>
+                    {msg.content}
+                  </div>
                 </div>
               </div>
 
               {/* Reactions */}
               {hasReactions && (
-                <div className="flex gap-1 mt-1 px-1">
+                <div className={`flex gap-1 mt-1 px-1 ${isMine ? "flex-row-reverse" : "flex-row"}`}>
                   {Object.entries(reactions).map(([emoji, users]) => (
                     <button
                       key={emoji}
