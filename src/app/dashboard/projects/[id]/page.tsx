@@ -8,6 +8,7 @@ import CopyButton from "@/components/CopyButton";
 import SendLinkButton from "@/components/SendLinkButton";
 import AddInvoiceForm from "@/components/AddInvoiceForm";
 import AddDeliverableForm from "@/components/AddDeliverableForm";
+import ReplyMessageForm from "@/components/ReplyMessageForm";
 
 export default async function ProjectDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -173,6 +174,9 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
                 </div>
               ))
             )}
+          </div>
+          <div className="px-4 pb-4">
+            <ReplyMessageForm projectId={project.id} />
           </div>
         </div>
       </div>
