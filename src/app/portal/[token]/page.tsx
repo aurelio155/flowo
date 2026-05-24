@@ -31,7 +31,6 @@ export default async function PortalPage({ params }: { params: Promise<{ token: 
 
   return (
     <div className="min-h-screen" style={{ background: "#050508", color: "white" }}>
-      <AutoRefresh interval={4000} />
       {/* Header */}
       <div className="px-6 py-5 flex items-center justify-between"
         style={{ background: "#0a0a12", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
