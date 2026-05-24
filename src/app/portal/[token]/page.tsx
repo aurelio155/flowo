@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import { Zap, CheckCircle, Clock, XCircle, MessageSquare, FileText } from "lucide-react";
