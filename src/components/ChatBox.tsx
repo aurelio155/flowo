@@ -31,7 +31,14 @@ export default function ChatBox({ initialMessages, currentSender, projectId, por
   const [lastOtherMsgTime, setLastOtherMsgTime] = useState(0);
   const [pickerOpen, setPickerOpen] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
   const otherSender = currentSender === "client" ? "freelance" : "client";
+
+  function isNearBottom() {
+    const el = scrollContainerRef.current;
+    if (!el) return true;
+    return el.scrollHeight - el.scrollTop - el.clientHeight < 120;
+  }
 
   const fetchMessages = async () => {
     const url = portalToken
@@ -58,7 +65,9 @@ export default function ChatBox({ initialMessages, currentSender, projectId, por
   }, []);
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (isNearBottom()) {
+      bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
   }, [messages, otherTyping]);
 
   useEffect(() => {
@@ -131,7 +140,7 @@ export default function ChatBox({ initialMessages, currentSender, projectId, por
 
   return (
     <div className="flex flex-col">
-      <div className="p-4 space-y-2 max-h-72 overflow-y-auto">
+      <div ref={scrollContainerRef} className="p-4 space-y-2 max-h-72 overflow-y-auto">
         {messages.length === 0 && (
           <p className="text-gray-500 text-sm text-center py-4">Aucun message pour l&apos;instant</p>
         )}
