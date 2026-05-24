@@ -65,8 +65,10 @@ export default function ChatBox({ initialMessages, currentSender, projectId, por
   }, []);
 
   useEffect(() => {
+    const el = scrollContainerRef.current;
+    if (!el) return;
     if (isNearBottom()) {
-      bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+      el.scrollTop = el.scrollHeight;
     }
   }, [messages, otherTyping]);
 
