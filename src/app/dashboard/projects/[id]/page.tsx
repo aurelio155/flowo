@@ -9,6 +9,7 @@ import SendLinkButton from "@/components/SendLinkButton";
 import AddInvoiceForm from "@/components/AddInvoiceForm";
 import AddDeliverableForm from "@/components/AddDeliverableForm";
 import ReplyMessageForm from "@/components/ReplyMessageForm";
+import AutoRefresh from "@/components/AutoRefresh";
 
 export default async function ProjectDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -40,6 +41,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
 
   return (
     <div className="text-white max-w-5xl">
+      <AutoRefresh interval={4000} />
       <Link href="/dashboard/projects"
         className="inline-flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors mb-6">
         <ArrowLeft className="w-4 h-4" />

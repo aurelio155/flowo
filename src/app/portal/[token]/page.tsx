@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import { Zap, CheckCircle, Clock, XCircle, MessageSquare, FileText } from "lucide-react";
 import ClientPortalActions from "@/components/ClientPortalActions";
+import AutoRefresh from "@/components/AutoRefresh";
 
 export default async function PortalPage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
@@ -28,6 +29,7 @@ export default async function PortalPage({ params }: { params: Promise<{ token: 
 
   return (
     <div className="min-h-screen" style={{ background: "#050508", color: "white" }}>
+      <AutoRefresh interval={4000} />
       {/* Header */}
       <div className="px-6 py-5 flex items-center justify-between"
         style={{ background: "#0a0a12", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
